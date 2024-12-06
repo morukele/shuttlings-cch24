@@ -7,23 +7,18 @@ use std::{
 
 #[derive(Deserialize)]
 struct Info {
-    from: String,
-    key: String,
+    from: Ipv4Addr,
+    key: Ipv4Addr,
 }
 
 #[get("/2/dest")]
 async fn dest(info: web::Query<Info>) -> impl Responder {
-    let from_ip = Ipv4Addr::from_str(&info.from)
-        .expect("Failed to parse IpV4")
-        .octets();
-    let key_ip = Ipv4Addr::from_str(&info.key)
-        .expect("Failed to parse IpV4")
-        .octets();
+    let from_ip = info.from;
+    let key_ip = info.key;
 
     let mut dest = [0; 4];
-    for (idx, (f, k)) in from_ip.iter().zip(key_ip).enumerate() {
-        let (val, _overflow) = f.overflowing_add(k);
-        dest[idx] = val
+    for (idx, (f, k)) in from_ip.octets().iter().zip(key_ip.octets()).enumerate() {
+        dest[idx] = f.overflowing_add(k).0
     }
 
     Ipv4Addr::from(dest).to_string()
@@ -31,59 +26,56 @@ async fn dest(info: web::Query<Info>) -> impl Responder {
 
 #[derive(Deserialize)]
 struct ReverseInfo {
-    from: String,
-    to: String,
+    from: Ipv4Addr,
+    to: Ipv4Addr,
 }
 
 #[get("/2/key")]
 async fn key(info: web::Query<ReverseInfo>) -> impl Responder {
-    let from_ip = Ipv4Addr::from_str(&info.from)
-        .expect("Failed to parse IpV4 address")
-        .octets();
-    let to_ip = Ipv4Addr::from_str(&info.to)
-        .expect("Failed to parse IpV4 address")
-        .octets();
+    let from_ip = info.from;
+    let to_ip = info.to;
 
     let mut key = [0; 4];
-    for (idx, x) in to_ip.iter().zip(from_ip).enumerate() {
-        let (val, _overflow) = x.0.overflowing_sub(x.1);
-        key[idx] = val
+    for (idx, x) in to_ip.octets().iter().zip(from_ip.octets()).enumerate() {
+        key[idx] = x.0.overflowing_sub(x.1).0;
     }
 
     Ipv4Addr::from(key).to_string()
 }
 
+#[derive(Deserialize)]
+struct InfoV6 {
+    from: Ipv6Addr,
+    key: Ipv6Addr,
+}
+
 #[get("/2/v6/dest")]
-async fn dest_v6(info: web::Query<Info>) -> impl Responder {
-    let from_ip = Ipv6Addr::from_str(&info.from)
-        .expect("Failed to parse IpV6")
-        .octets();
-    let key_ip = Ipv6Addr::from_str(&info.key)
-        .expect("Failed to parse IpV6")
-        .octets();
+async fn dest_v6(info: web::Query<InfoV6>) -> impl Responder {
+    let from_ip = info.from;
+    let key_ip = info.key;
 
     let mut dest_v6 = [0; 16];
-    for (idx, x) in from_ip.iter().zip(key_ip).enumerate() {
-        let res = x.0 ^ x.1;
-        dest_v6[idx] = res;
+    for (idx, x) in from_ip.octets().iter().zip(key_ip.octets()).enumerate() {
+        dest_v6[idx] = x.0 ^ x.1;
     }
 
     Ipv6Addr::from(dest_v6).to_string()
 }
 
+#[derive(Deserialize)]
+struct ReverseInfoV6 {
+    from: Ipv6Addr,
+    to: Ipv6Addr,
+}
+
 #[get("/2/v6/key")]
-async fn key_v6(info: web::Query<ReverseInfo>) -> impl Responder {
-    let from_ip = Ipv6Addr::from_str(&info.from)
-        .expect("Failed to parse IpV6")
-        .octets();
-    let key_ip = Ipv6Addr::from_str(&info.to)
-        .expect("Failed to parse IpV6")
-        .octets();
+async fn key_v6(info: web::Query<ReverseInfoV6>) -> impl Responder {
+    let from_ip = info.from;
+    let key_ip = info.to;
 
     let mut key_v6 = [0; 16];
-    for (idx, x) in from_ip.iter().zip(key_ip).enumerate() {
-        let res = x.0 ^ x.1;
-        key_v6[idx] = res;
+    for (idx, x) in from_ip.octets().iter().zip(key_ip.octets()).enumerate() {
+        key_v6[idx] = x.0 ^ x.1;
     }
 
     Ipv6Addr::from(key_v6).to_string()
