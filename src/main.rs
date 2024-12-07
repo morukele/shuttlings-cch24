@@ -1,7 +1,7 @@
 use actix_web::{
     get,
     http::StatusCode,
-    web::{service, Redirect, ServiceConfig},
+    web::{Redirect, ServiceConfig},
     Responder,
 };
 use shuttle_actix_web::ShuttleActixWeb;

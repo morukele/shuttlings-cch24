@@ -1,9 +1,6 @@
 use actix_web::{get, web, Responder};
 use serde::Deserialize;
-use std::{
-    net::{Ipv4Addr, Ipv6Addr},
-    str::FromStr,
-};
+use std::net::{Ipv4Addr, Ipv6Addr};
 
 #[derive(Deserialize)]
 struct Info {
