@@ -50,6 +50,7 @@ async fn manifest(req: HttpRequest, data: String) -> HttpResponse {
         return HttpResponse::BadRequest().body("Magic keyword not provided");
     }
 
+    // Process orders
     let Some(orders) = package.metadata.map(|m| {
         m.orders
             .into_iter()
