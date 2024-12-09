@@ -17,15 +17,19 @@ struct ConversionUnits {
     pints: Option<f32>,
 }
 
-#[post("/9/refill")]
-async fn refill(limiter: web::Data<Arc<Mutex<RateLimiter>>>) -> HttpResponse {
-    let mut bucket = limiter.lock().unwrap();
-    *bucket = RateLimiter::builder()
+pub fn new_rate_limiter() -> RateLimiter {
+    RateLimiter::builder()
         .max(5)
         .initial(5)
         .refill(1)
         .interval(Duration::from_secs(1))
-        .build();
+        .build()
+}
+
+#[post("/9/refill")]
+async fn refill(limiter: web::Data<Arc<Mutex<RateLimiter>>>) -> HttpResponse {
+    let mut bucket = limiter.lock().unwrap();
+    *bucket = new_rate_limiter();
 
     HttpResponse::Ok().finish()
 }
@@ -37,59 +41,50 @@ async fn milk(
     data: String,
 ) -> HttpResponse {
     // get content header
-    let header = req
-        .headers()
-        .get(CONTENT_TYPE)
-        .and_then(|ct| ct.to_str().ok())
-        .unwrap_or_default();
+    let header = req.headers().get(CONTENT_TYPE);
+    let json = matches!(header.map(|ct| ct.to_str()), Some(Ok("application/json")));
 
     // acquire 1L of milk from tbe bucket
     let bucket = limiter.lock().unwrap();
     // println!("Bucket balance: {}", bucket.balance());
-
-    match bucket.try_acquire(1) {
-        true => match header {
-            "application/json" => {
-                let conversion_unit = serde_json::from_str::<ConversionUnits>(&data);
-                println!("Payload {:?}", conversion_unit);
-                match conversion_unit {
-                    Ok(unit) => {
-                        // process the request
-                        match (unit.gallons, unit.liters, unit.litres, unit.pints) {
-                            (Some(gallons), None, None, None) => {
-                                let liters = gallons * 3.78541;
-                                println!("litres: {liters}");
-                                HttpResponse::Ok().json(json!({"liters": liters}))
-                            }
-                            (None, Some(liters), None, None) => {
-                                // multiplication should expand the size of the float
-                                let gallons = liters / 3.78541;
-                                println!("gallons: {gallons}");
-                                HttpResponse::Ok().json(json!({"gallons": gallons }))
-                            }
-                            (None, None, Some(litres), None) => {
-                                // dealing with UK values
-                                let pints = litres * 1.759754;
-                                println!("pints: {}", pints);
-                                HttpResponse::Ok().json(json!({"pints": pints}))
-                            }
-                            (None, None, None, Some(pints)) => {
-                                // dealing with UK values
-                                let litres = pints / 1.759754;
-                                println!("litres: {}", litres);
-                                HttpResponse::Ok().json(json!({"litres": litres}))
-                            }
-                            _ => HttpResponse::BadRequest().finish(), // handles all non interesting parts
-                        }
+    if !bucket.try_acquire(1) {
+        HttpResponse::TooManyRequests().body("No milk available\n")
+    } else if !json {
+        HttpResponse::BadRequest().finish()
+    } else {
+        let conversion_unit = serde_json::from_str::<ConversionUnits>(&data);
+        println!("Payload {:?}", conversion_unit);
+        match conversion_unit {
+            Ok(unit) => {
+                // process the request
+                match (unit.gallons, unit.liters, unit.litres, unit.pints) {
+                    (Some(gallons), None, None, None) => {
+                        let liters = gallons * 3.78541;
+                        println!("litres: {liters}");
+                        HttpResponse::Ok().json(json!({"liters": liters}))
                     }
-                    Err(_) => {
-                        // invalid json
-                        HttpResponse::BadRequest().finish()
+                    (None, Some(liters), None, None) => {
+                        // multiplication should expand the size of the float
+                        let gallons = liters / 3.78541;
+                        println!("gallons: {gallons}");
+                        HttpResponse::Ok().json(json!({"gallons": gallons }))
                     }
+                    (None, None, Some(litres), None) => {
+                        // dealing with UK values
+                        let pints = litres * 1.759754;
+                        println!("pints: {}", pints);
+                        HttpResponse::Ok().json(json!({"pints": pints}))
+                    }
+                    (None, None, None, Some(pints)) => {
+                        // dealing with UK values
+                        let litres = pints / 1.759754;
+                        println!("litres: {}", litres);
+                        HttpResponse::Ok().json(json!({"litres": litres}))
+                    }
+                    _ => HttpResponse::BadRequest().finish(),
                 }
             }
-            _ => HttpResponse::Ok().body("Milk withdrawn\n"),
-        },
-        false => HttpResponse::TooManyRequests().body("No milk available\n"),
+            Err(_) => HttpResponse::BadRequest().finish(),
+        }
     }
 }

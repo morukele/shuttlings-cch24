@@ -1,3 +1,3 @@
 pub mod day_09;
-pub mod day_2;
-pub mod day_5;
+pub mod day_02;
+pub mod day_05;

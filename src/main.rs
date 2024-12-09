@@ -6,14 +6,11 @@ use actix_web::{
 };
 use shuttle_actix_web::ShuttleActixWeb;
 use shuttlings_cch24::{
-    day_09::{milk, refill},
-    day_2::{dest, dest_v6, key, key_v6},
-    day_5::manifest,
+    day_02::{dest, dest_v6, key, key_v6},
+    day_05::manifest,
+    day_09::{milk, new_rate_limiter, refill},
 };
-use std::{
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::sync::{Arc, Mutex};
 
 #[get("/")]
 async fn hello_world() -> &'static str {
@@ -28,13 +25,7 @@ async fn seek() -> impl Responder {
 #[shuttle_runtime::main]
 async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     // Setting up rate limiter for bucket
-    // TODO: using ARC here because of the assumption that it will be passed through the threads in the code.
-    let limiter = leaky_bucket::RateLimiter::builder()
-        .max(5)
-        .initial(5)
-        .refill(1)
-        .interval(Duration::from_secs(1))
-        .build();
+    let limiter = new_rate_limiter();
     let bucket = Arc::new(Mutex::new(limiter));
 
     let config = move |cfg: &mut ServiceConfig| {
