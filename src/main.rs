@@ -9,8 +9,11 @@ use shuttlings_cch24::{
     day_02::{dest, dest_v6, key, key_v6},
     day_05::manifest,
     day_09::{milk, new_rate_limiter, refill},
+    day_12::{board, place, reset},
+    models::board::Board,
 };
 use std::sync::{Arc, Mutex};
+use tokio::sync::RwLock;
 
 #[get("/")]
 async fn hello_world() -> &'static str {
@@ -27,9 +30,12 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clon
     // Setting up rate limiter for bucket
     let limiter = new_rate_limiter();
     let bucket = Arc::new(Mutex::new(limiter));
+    // Setting up board
+    let grid = Arc::new(RwLock::new(Board::new()));
 
     let config = move |cfg: &mut ServiceConfig| {
         cfg.app_data(Data::new(bucket.clone()))
+            .app_data(Data::new(grid.clone()))
             .service(hello_world)
             .service(seek)
             .service(dest)
@@ -38,7 +44,10 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clon
             .service(key_v6)
             .service(milk)
             .service(refill)
-            .service(manifest);
+            .service(manifest)
+            .service(board)
+            .service(reset)
+            .service(place);
     };
 
     Ok(config.into())
