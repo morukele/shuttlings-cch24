@@ -1,15 +1,15 @@
 use actix_web::{
-    get,
+    error, get,
     http::StatusCode,
-    web::{Data, Redirect, ServiceConfig},
-    Responder,
+    web::{self, Data, Redirect, ServiceConfig},
+    HttpResponse, Responder,
 };
 use shuttle_actix_web::ShuttleActixWeb;
 use shuttlings_cch24::{
     day_02::{dest, dest_v6, key, key_v6},
     day_05::manifest,
     day_09::{milk, new_rate_limiter, refill},
-    day_12::{board, place, reset},
+    day_12::{board, place, random_board, reset},
     models::board::Board,
 };
 use std::sync::{Arc, Mutex};
@@ -47,7 +47,11 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clon
             .service(manifest)
             .service(board)
             .service(reset)
-            .service(place);
+            .service(place)
+            .service(random_board)
+            .app_data(web::PathConfig::default().error_handler(|err, _| {
+                error::InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
+            }));
     };
 
     Ok(config.into())
