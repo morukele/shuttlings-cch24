@@ -10,6 +10,7 @@ use shuttlings_cch24::{
     day_05::manifest,
     day_09::{milk, new_rate_limiter, refill},
     day_12::{board, place, random_board, reset},
+    day_16::{decode, unwrap, wrap},
     models::board::Board,
 };
 use std::sync::{Arc, Mutex};
@@ -49,6 +50,9 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clon
             .service(reset)
             .service(place)
             .service(random_board)
+            .service(wrap)
+            .service(unwrap)
+            .service(decode)
             .app_data(web::PathConfig::default().error_handler(|err, _| {
                 error::InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
             }));
