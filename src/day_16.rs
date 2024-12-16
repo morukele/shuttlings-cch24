@@ -88,8 +88,9 @@ pub async fn unwrap(req: HttpRequest) -> HttpResponse {
 #[post("/16/decode")]
 pub async fn decode(jwt: String) -> HttpResponse {
     // decode claim
-    let pem = fs::read("./src/certs/day16_santa_public_key.pem").expect("failed to read pem files");
-    let key = DecodingKey::from_rsa_pem(&pem);
+    let pem = include_str!("certs/day16_santa_public_key.pem");
+    // let pem = fs::read("./src/certs/day16_santa_public_key.pem").expect("failed to read pem files");
+    let key = DecodingKey::from_rsa_pem(pem.as_bytes());
 
     let Ok(key) = key else {
         // could not create decoding key from PEM file
