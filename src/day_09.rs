@@ -1,9 +1,14 @@
+use actix_web::web::ServiceConfig;
 use actix_web::{http::header::CONTENT_TYPE, post, web, HttpRequest, HttpResponse};
 use leaky_bucket::RateLimiter;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+
+pub fn configure(cfg: &mut ServiceConfig) {
+    cfg.service(refill).service(milk);
+}
 
 #[derive(Deserialize, Debug)]
 struct ConversionUnits {

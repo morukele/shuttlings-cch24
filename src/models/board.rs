@@ -18,7 +18,7 @@ pub enum BoardValue {
 }
 
 impl BoardValue {
-    fn to_char(&self) -> char {
+    fn convert_to_char(&self) -> char {
         match self {
             BoardValue::Cookie => COOKIE,
             BoardValue::Milk => MILK,
@@ -121,7 +121,7 @@ impl Board {
         // Replacing the middle of the 6x5 grid, with the 4x4 gird
         for row in 0..self.grid.len() {
             for col in 0..self.grid.len() {
-                state[row][col + 1] = self.grid[row][col].to_char();
+                state[row][col + 1] = self.grid[row][col].convert_to_char();
             }
         }
 
@@ -142,7 +142,7 @@ impl Board {
 
         if let Some(winner) = self.winner {
             if winner != BoardValue::Empty {
-                state.push_str(&format!("{} wins!\n", winner.to_char()));
+                state.push_str(&format!("{} wins!\n", winner.convert_to_char()));
             } else {
                 state.push_str("No winner.\n");
             }

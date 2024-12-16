@@ -1,6 +1,17 @@
-use actix_web::{get, web, Responder};
+use actix_web::{
+    get,
+    web::{self, ServiceConfig},
+    Responder,
+};
 use serde::Deserialize;
 use std::net::{Ipv4Addr, Ipv6Addr};
+
+pub fn configure(cfg: &mut ServiceConfig) {
+    cfg.service(dest)
+        .service(key)
+        .service(dest_v6)
+        .service(key_v6);
+}
 
 #[derive(Deserialize)]
 struct Info {

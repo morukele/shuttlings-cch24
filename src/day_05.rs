@@ -1,5 +1,9 @@
-use actix_web::{http::header, post, HttpRequest, HttpResponse};
+use actix_web::{http::header, post, web::ServiceConfig, HttpRequest, HttpResponse};
 use cargo_manifest::Manifest;
+
+pub fn configure(cfg: &mut ServiceConfig) {
+    cfg.service(manifest);
+}
 
 #[derive(Default, serde::Deserialize)]
 struct Metadata {

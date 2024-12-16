@@ -5,14 +5,7 @@ use actix_web::{
     HttpResponse, Responder,
 };
 use shuttle_actix_web::ShuttleActixWeb;
-use shuttlings_cch24::{
-    day_02::{dest, dest_v6, key, key_v6},
-    day_05::manifest,
-    day_09::{milk, new_rate_limiter, refill},
-    day_12::{board, place, random_board, reset},
-    day_16::{decode, unwrap, wrap},
-    models::board::Board,
-};
+use shuttlings_cch24::{day_02, day_05, day_09, day_12, day_16, models::board::Board};
 use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
 
@@ -29,7 +22,7 @@ async fn seek() -> impl Responder {
 #[shuttle_runtime::main]
 async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     // Setting up rate limiter for bucket
-    let limiter = new_rate_limiter();
+    let limiter = day_09::new_rate_limiter();
     let bucket = Arc::new(Mutex::new(limiter));
     // Setting up board
     let grid = Arc::new(RwLock::new(Board::new()));
@@ -39,20 +32,11 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clon
             .app_data(Data::new(grid.clone()))
             .service(hello_world)
             .service(seek)
-            .service(dest)
-            .service(key)
-            .service(dest_v6)
-            .service(key_v6)
-            .service(milk)
-            .service(refill)
-            .service(manifest)
-            .service(board)
-            .service(reset)
-            .service(place)
-            .service(random_board)
-            .service(wrap)
-            .service(unwrap)
-            .service(decode)
+            .configure(day_02::configure)
+            .configure(day_05::configure)
+            .configure(day_09::configure)
+            .configure(day_12::configure)
+            .configure(day_16::configure)
             .app_data(web::PathConfig::default().error_handler(|err, _| {
                 error::InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
             }));

@@ -1,13 +1,20 @@
-use std::{
-    fs,
-    time::{SystemTime, UNIX_EPOCH},
+use actix_web::{
+    cookie::Cookie,
+    get,
+    http::header::COOKIE,
+    post,
+    web::{self, ServiceConfig},
+    HttpRequest, HttpResponse,
 };
-
-use actix_web::{cookie::Cookie, get, http::header::COOKIE, post, web, HttpRequest, HttpResponse};
 use jsonwebtoken::{decode_header, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use once_cell::sync::Lazy;
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+pub fn configure(cfg: &mut ServiceConfig) {
+    cfg.service(wrap).service(unwrap).service(decode);
+}
 
 struct Keys {
     encoding: EncodingKey,

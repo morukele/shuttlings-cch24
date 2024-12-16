@@ -1,8 +1,19 @@
 use std::sync::Arc;
 
 use crate::models::board::{Board, BoardValue};
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{
+    get, post,
+    web::{self, ServiceConfig},
+    HttpResponse,
+};
 use tokio::sync::RwLock;
+
+pub fn configure(cfg: &mut ServiceConfig) {
+    cfg.service(reset)
+        .service(place)
+        .service(random_board)
+        .service(board);
+}
 
 #[get("/12/board")]
 pub async fn board(data: web::Data<Arc<RwLock<Board>>>) -> HttpResponse {
