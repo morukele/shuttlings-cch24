@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "Shuttle Christmas Code Hunt",
+            "connectString": "postgres://postgres:postgres@localhost:18127/shuttlings-cch24"
+        }
+    ]
+}
