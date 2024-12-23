@@ -4,8 +4,10 @@ pub mod day_09;
 pub mod day_12;
 pub mod day_16;
 pub mod day_19;
+pub mod day_23;
 pub mod models;
 
+use actix_files::Files;
 use actix_web::{
     error, get,
     http::StatusCode,
@@ -49,12 +51,14 @@ async fn main(
             .app_data(Data::new(pool))
             .service(hello_world)
             .service(seek)
+            .service(Files::new("/assets", "assets"))
             .configure(day_02::configure)
             .configure(day_05::configure)
             .configure(day_09::configure)
             .configure(day_12::configure)
             .configure(day_16::configure)
             .configure(day_19::configure)
+            .configure(day_23::configure)
             .app_data(web::PathConfig::default().error_handler(|err, _| {
                 error::InternalError::from_response(err, HttpResponse::BadRequest().into()).into()
             }));
