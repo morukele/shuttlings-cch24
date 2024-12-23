@@ -133,7 +133,7 @@ pub async fn lockfile(mut payload: Multipart) -> HttpResponse {
     // Convert file to valid cargo manifest
     let lockfile = match toml::from_str::<LockFile>(&data) {
         Ok(lockfile) => lockfile,
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::BadRequest().finish();
         }
     };
